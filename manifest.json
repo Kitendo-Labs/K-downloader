@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "HLS Stream Downloader",
+  "name": "Kitendo Stream Downloader",
   "version": "0.1.0",
   "description": "Detect and download HLS/DASH video streams from any tab",
   "permissions": [
