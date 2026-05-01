@@ -6,10 +6,12 @@
 </head>
 <body>
   <div class="header">
-    <h1>HLS Downloader</h1>
+    <h1>Stream Downloader</h1>
+    <span id="stream-count" class="stream-count"></span>
   </div>
   <div id="stream-list"></div>
   <div id="empty-state" class="empty" hidden>
+    <div class="empty-icon">&#9673;</div>
     No streams detected on this tab
   </div>
   <script type="module" src="popup.js"></script>

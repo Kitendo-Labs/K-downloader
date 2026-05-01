@@ -5,57 +5,100 @@
 }
 
 body {
-  width: 380px;
-  max-height: 480px;
+  width: 400px;
+  max-height: 520px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
   color: #1a1a1a;
-  background: #fafafa;
+  background: #f5f5f5;
   overflow-y: auto;
 }
 
 .header {
-  padding: 12px 16px;
-  background: #1a1a1a;
+  padding: 14px 16px;
+  background: #111;
   color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .header h1 {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.header .stream-count {
+  font-size: 11px;
+  color: #888;
+  font-weight: 400;
 }
 
 .empty {
-  padding: 32px 16px;
+  padding: 48px 16px;
   text-align: center;
-  color: #888;
-  font-size: 13px;
+  color: #999;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.4;
 }
 
 .stream-item {
-  padding: 12px 16px;
-  border-bottom: 1px solid #eee;
+  padding: 14px 16px;
+  background: #fff;
+  border-bottom: 1px solid #eaeaea;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+}
+
+.stream-item:last-child {
+  border-bottom: none;
+}
+
+.stream-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stream-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.stream-filename {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .stream-meta {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
 }
 
 .stream-badge {
-  flex-shrink: 0;
-  padding: 2px 6px;
-  font-size: 10px;
+  padding: 1px 5px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  border-radius: 3px;
+  border-radius: 2px;
   color: #fff;
-  margin-top: 1px;
 }
 
 .stream-badge.hls {
@@ -63,33 +106,29 @@ body {
 }
 
 .stream-badge.dash {
-  background: #9333ea;
+  background: #7c3aed;
 }
 
 .stream-url {
-  font-size: 11px;
-  color: #555;
-  word-break: break-all;
-  line-height: 1.4;
+  font-size: 10px;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
 }
 
-.stream-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .btn-download {
-  padding: 6px 14px;
+  flex-shrink: 0;
+  padding: 7px 16px;
   font-size: 12px;
   font-weight: 600;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  background: #1a1a1a;
+  background: #111;
   color: #fff;
-  transition: background 0.15s;
+  transition: all 0.15s;
 }
 
 .btn-download:hover {
@@ -97,25 +136,66 @@ body {
 }
 
 .btn-download:disabled {
-  background: #999;
-  cursor: not-allowed;
+  background: #d4d4d4;
+  color: #888;
+  cursor: default;
 }
 
-.progress-text {
+.btn-download.done {
+  background: #16a34a;
+  color: #fff;
+}
+
+.btn-download.error {
+  background: #dc2626;
+  color: #fff;
+}
+
+.progress-section {
+  display: none;
+}
+
+.progress-section.active {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.progress-percent {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-detail {
   font-size: 11px;
   color: #888;
+  text-align: right;
+  line-height: 1.4;
 }
 
 .progress-bar {
-  height: 3px;
-  background: #eee;
-  border-radius: 2px;
+  height: 4px;
+  background: #e5e5e5;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: #1a1a1a;
+  background: #111;
   width: 0%;
-  transition: width 0.2s;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-fill.complete {
+  background: #16a34a;
 }

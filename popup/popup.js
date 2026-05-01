@@ -1,5 +1,6 @@
 const streamList = document.getElementById("stream-list");
 const emptyState = document.getElementById("empty-state");
+const streamCountEl = document.getElementById("stream-count");
 const streamElements = new Map();
 let currentTabTitle = "video";
 
@@ -16,7 +17,8 @@ async function init() {
   if (streams.length === 0) return showEmpty();
 
   emptyState.hidden = true;
-  streams.forEach((stream) => renderStream(stream));
+  streamCountEl.textContent = `${streams.length} stream${streams.length > 1 ? "s" : ""}`;
+  streams.forEach((stream, index) => renderStream(stream, index));
 
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === "downloadProgress") {
@@ -28,11 +30,35 @@ async function init() {
 function showEmpty() {
   emptyState.hidden = false;
   streamList.innerHTML = "";
+  streamCountEl.textContent = "";
 }
 
-function renderStream(stream) {
+function getFilename(streamType) {
+  const sanitized = currentTabTitle
+    .replace(/[<>:"/\\|?*]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .substring(0, 120) || "video";
+  const ext = streamType === "dash" ? ".mp4" : ".ts";
+  return sanitized + ext;
+}
+
+function renderStream(stream, index) {
+  const filename = getFilename(stream.streamType);
+
   const item = document.createElement("div");
   item.className = "stream-item";
+
+  const top = document.createElement("div");
+  top.className = "stream-top";
+
+  const info = document.createElement("div");
+  info.className = "stream-info";
+
+  const filenameEl = document.createElement("div");
+  filenameEl.className = "stream-filename";
+  filenameEl.textContent = filename;
+  filenameEl.title = filename;
 
   const meta = document.createElement("div");
   meta.className = "stream-meta";
@@ -41,46 +67,63 @@ function renderStream(stream) {
   badge.className = `stream-badge ${stream.streamType}`;
   badge.textContent = stream.streamType.toUpperCase();
 
-  const urlDisplay = document.createElement("div");
+  const urlDisplay = document.createElement("span");
   urlDisplay.className = "stream-url";
-  urlDisplay.textContent = truncateUrl(stream.url, 100);
+  urlDisplay.textContent = shortenUrl(stream.url);
   urlDisplay.title = stream.url;
 
   meta.appendChild(badge);
   meta.appendChild(urlDisplay);
 
-  const actions = document.createElement("div");
-  actions.className = "stream-actions";
+  info.appendChild(filenameEl);
+  info.appendChild(meta);
 
   const btn = document.createElement("button");
   btn.className = "btn-download";
   btn.textContent = "Download";
 
-  const progressText = document.createElement("span");
-  progressText.className = "progress-text";
+  top.appendChild(info);
+  top.appendChild(btn);
 
-  actions.appendChild(btn);
-  actions.appendChild(progressText);
+  const progressSection = document.createElement("div");
+  progressSection.className = "progress-section";
+
+  const progressRow = document.createElement("div");
+  progressRow.className = "progress-row";
+
+  const percentEl = document.createElement("div");
+  percentEl.className = "progress-percent";
+  percentEl.textContent = "0%";
+
+  const detailEl = document.createElement("div");
+  detailEl.className = "progress-detail";
+  detailEl.textContent = "Preparing...";
+
+  progressRow.appendChild(percentEl);
+  progressRow.appendChild(detailEl);
 
   const progressBar = document.createElement("div");
   progressBar.className = "progress-bar";
-  progressBar.hidden = true;
 
   const progressFill = document.createElement("div");
   progressFill.className = "progress-fill";
   progressBar.appendChild(progressFill);
 
-  item.appendChild(meta);
-  item.appendChild(actions);
-  item.appendChild(progressBar);
+  progressSection.appendChild(progressRow);
+  progressSection.appendChild(progressBar);
+
+  item.appendChild(top);
+  item.appendChild(progressSection);
   streamList.appendChild(item);
 
-  streamElements.set(stream.url, { btn, progressText, progressBar, progressFill });
+  streamElements.set(stream.url, {
+    btn, percentEl, detailEl, progressSection, progressFill, filenameEl,
+  });
 
   btn.addEventListener("click", () => {
     btn.disabled = true;
-    btn.textContent = "Starting...";
-    progressBar.hidden = false;
+    btn.textContent = "0%";
+    progressSection.classList.add("active");
 
     chrome.runtime.sendMessage({
       action: "startDownload",
@@ -102,43 +145,56 @@ function updateStreamUI(url, status) {
   const els = streamElements.get(url);
   if (!els) return;
 
-  const { btn, progressText, progressBar, progressFill } = els;
+  const { btn, percentEl, detailEl, progressSection, progressFill } = els;
 
   if (status.state === "downloading") {
     btn.disabled = true;
-    btn.textContent = "Downloading...";
-    progressBar.hidden = false;
-    progressFill.style.width = `${status.percent || 0}%`;
-    progressText.textContent = status.total
-      ? `${status.downloaded}/${status.total} segments`
-      : "Starting...";
+    const pct = status.percent || 0;
+    btn.textContent = `${pct}%`;
+    progressSection.classList.add("active");
+    progressFill.style.width = `${pct}%`;
+    percentEl.textContent = `${pct}%`;
+    detailEl.textContent = status.total
+      ? `${status.downloaded} of ${status.total} segments`
+      : "Connecting...";
   }
 
   if (status.state === "saving") {
-    btn.textContent = "Saving...";
+    btn.textContent = "Saving";
     progressFill.style.width = "100%";
-    progressText.textContent = "Writing file...";
+    percentEl.textContent = "100%";
+    detailEl.textContent = "Writing to disk...";
   }
 
   if (status.state === "done") {
     btn.textContent = "Done";
     btn.disabled = true;
+    btn.classList.add("done");
     progressFill.style.width = "100%";
-    progressText.textContent = "Saved";
+    progressFill.classList.add("complete");
+    percentEl.textContent = "100%";
+    detailEl.textContent = "Saved";
   }
 
   if (status.state === "error") {
     btn.textContent = "Retry";
     btn.disabled = false;
-    progressText.textContent = status.error || "Download failed";
+    btn.classList.add("error");
+    percentEl.textContent = "Error";
+    detailEl.textContent = status.error || "Download failed";
   }
 }
 
-function truncateUrl(url, maxLength) {
-  if (url.length <= maxLength) return url;
-  const start = url.substring(0, 45);
-  const end = url.substring(url.length - 45);
-  return `${start}...${end}`;
+function shortenUrl(url) {
+  try {
+    const u = new URL(url);
+    const path = u.pathname.length > 30
+      ? u.pathname.substring(0, 30) + "..."
+      : u.pathname;
+    return u.hostname + path;
+  } catch {
+    return url.substring(0, 50);
+  }
 }
 
 init();
