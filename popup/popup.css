@@ -5,7 +5,7 @@
 }
 
 body {
-  width: 360px;
+  width: 380px;
   max-height: 480px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
@@ -41,6 +41,31 @@ body {
   gap: 8px;
 }
 
+.stream-meta {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.stream-badge {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+  color: #fff;
+  margin-top: 1px;
+}
+
+.stream-badge.hls {
+  background: #2563eb;
+}
+
+.stream-badge.dash {
+  background: #9333ea;
+}
+
 .stream-url {
   font-size: 11px;
   color: #555;
@@ -72,7 +97,7 @@ body {
 }
 
 .btn-download:disabled {
-  background: #ccc;
+  background: #999;
   cursor: not-allowed;
 }
 

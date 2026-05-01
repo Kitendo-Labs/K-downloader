@@ -2,12 +2,13 @@
   "manifest_version": 3,
   "name": "HLS Stream Downloader",
   "version": "0.1.0",
-  "description": "Detect and download HLS video streams from any tab",
+  "description": "Detect and download HLS/DASH video streams from any tab",
   "permissions": [
     "webRequest",
     "storage",
     "downloads",
-    "activeTab"
+    "activeTab",
+    "offscreen"
   ],
   "host_permissions": [
     "<all_urls>"
