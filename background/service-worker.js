@@ -80,7 +80,7 @@ async function handleDownloadRequest(url, streamType, tabTitle) {
     broadcastProgress(url);
 
     const filename = generateFilename(tabTitle);
-    await triggerDownload(result, filename);
+    await triggerDownload(result, filename, streamType);
 
     activeDownloads.set(url, { state: "done" });
     broadcastProgress(url);
