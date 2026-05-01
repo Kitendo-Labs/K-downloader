@@ -79,8 +79,9 @@ async function handleDownloadRequest(url, streamType, tabTitle) {
     activeDownloads.set(url, { state: "saving" });
     broadcastProgress(url);
 
-    const filename = generateFilename(tabTitle);
-    await triggerDownload(result, filename, streamType);
+    const ext = streamType === "dash" ? ".mp4" : ".ts";
+    const filename = generateFilename(tabTitle, ext);
+    await triggerDownload(result, filename);
 
     activeDownloads.set(url, { state: "done" });
     broadcastProgress(url);
@@ -97,12 +98,12 @@ function broadcastProgress(url) {
   chrome.runtime.sendMessage({ action: "downloadProgress", url, status }).catch(() => {});
 }
 
-function generateFilename(tabTitle) {
+function generateFilename(tabTitle, ext) {
   const sanitized = (tabTitle || "video")
     .replace(/[<>:"/\\|?*]+/g, "")
     .replace(/\s+/g, " ")
     .trim()
     .substring(0, 120);
 
-  return `${sanitized || "video"}.mp4`;
+  return `${sanitized || "video"}${ext}`;
 }
