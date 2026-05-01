@@ -1,26 +1,23 @@
 chrome.runtime.onMessage.addListener(async (message) => {
-  if (message.action !== "offscreen-create-blob-url") return;
+  if (message.action !== "offscreen-download") return;
 
   const cache = await caches.open("hls-downloads");
   const response = await cache.match(message.cacheKey);
-
-  if (!response) {
-    chrome.runtime.sendMessage({ action: "blob-url-ready", blobUrl: null, cacheKey: message.cacheKey });
-    return;
-  }
+  if (!response) return;
 
   const blob = await response.blob();
-  const blobUrl = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
 
-  chrome.runtime.sendMessage({
-    action: "blob-url-ready",
-    blobUrl,
-    cacheKey: message.cacheKey,
-  });
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = message.filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
   setTimeout(async () => {
-    URL.revokeObjectURL(blobUrl);
+    URL.revokeObjectURL(url);
     const c = await caches.open("hls-downloads");
     await c.delete(message.cacheKey);
-  }, 120000);
+  }, 60000);
 });

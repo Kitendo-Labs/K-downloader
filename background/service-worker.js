@@ -52,8 +52,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
   }
 });
 
-const pendingBlobRequests = new Map();
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "startDownload") {
     handleDownloadRequest(message.url, message.streamType, message.tabTitle);
@@ -65,14 +63,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ status });
   }
 
-  if (message.action === "blob-url-ready") {
-    const pending = pendingBlobRequests.get(message.cacheKey);
-    if (pending) {
-      pending.resolve(message.blobUrl);
-      pendingBlobRequests.delete(message.cacheKey);
-    }
-  }
-
   return false;
 });
 
@@ -81,7 +71,7 @@ async function handleDownloadRequest(url, streamType, tabTitle) {
   broadcastProgress(url);
 
   try {
-    const blob = await downloadStream(url, streamType, (progress) => {
+    const result = await downloadStream(url, streamType, (progress) => {
       activeDownloads.set(url, { state: "downloading", ...progress });
       broadcastProgress(url);
     });
@@ -90,16 +80,7 @@ async function handleDownloadRequest(url, streamType, tabTitle) {
     broadcastProgress(url);
 
     const filename = generateFilename(tabTitle);
-    const { cacheKey } = await triggerDownload(blob, filename);
-
-    const blobUrl = await requestBlobUrl(cacheKey);
-    if (!blobUrl) throw new Error("Failed to create blob URL");
-
-    await chrome.downloads.download({
-      url: blobUrl,
-      filename,
-      saveAs: true,
-    });
+    await triggerDownload(result, filename);
 
     activeDownloads.set(url, { state: "done" });
     broadcastProgress(url);
@@ -114,24 +95,6 @@ async function handleDownloadRequest(url, streamType, tabTitle) {
 function broadcastProgress(url) {
   const status = activeDownloads.get(url);
   chrome.runtime.sendMessage({ action: "downloadProgress", url, status }).catch(() => {});
-}
-
-function requestBlobUrl(cacheKey) {
-  return new Promise((resolve) => {
-    pendingBlobRequests.set(cacheKey, { resolve });
-
-    chrome.runtime.sendMessage({
-      action: "offscreen-create-blob-url",
-      cacheKey,
-    });
-
-    setTimeout(() => {
-      if (pendingBlobRequests.has(cacheKey)) {
-        pendingBlobRequests.delete(cacheKey);
-        resolve(null);
-      }
-    }, 30000);
-  });
 }
 
 function generateFilename(tabTitle) {
