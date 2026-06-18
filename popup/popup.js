@@ -36,8 +36,8 @@ function showEmpty() {
 function getFilename(streamType) {
   const sanitized = currentTabTitle
     .replace(/[<>:"/\\|?*]+/g, "")
-    .replace(/\s+/g, " ")
     .trim()
+    .replace(/\s+/g, "_")
     .substring(0, 120) || "video";
   const ext = streamType === "dash" ? ".mp4" : ".ts";
   return sanitized + ext;
@@ -82,8 +82,14 @@ function renderStream(stream, index) {
   btn.className = "btn-download";
   btn.textContent = "Download";
 
+  const openFolderBtn = document.createElement("button");
+  openFolderBtn.className = "btn-open-folder";
+  openFolderBtn.textContent = "Open folder";
+  openFolderBtn.hidden = true;
+
   top.appendChild(info);
   top.appendChild(btn);
+  top.appendChild(openFolderBtn);
 
   const progressSection = document.createElement("div");
   progressSection.className = "progress-section";
@@ -117,7 +123,16 @@ function renderStream(stream, index) {
   streamList.appendChild(item);
 
   streamElements.set(stream.url, {
-    btn, percentEl, detailEl, progressSection, progressFill, filenameEl,
+    btn, percentEl, detailEl, progressSection, progressFill, filenameEl, openFolderBtn,
+  });
+
+  openFolderBtn.addEventListener("click", () => {
+    const downloadId = openFolderBtn.dataset.downloadId;
+    if (downloadId === undefined) return;
+    chrome.runtime.sendMessage({
+      action: "showDownload",
+      downloadId: Number(downloadId),
+    });
   });
 
   btn.addEventListener("click", () => {
@@ -145,7 +160,7 @@ function updateStreamUI(url, status) {
   const els = streamElements.get(url);
   if (!els) return;
 
-  const { btn, percentEl, detailEl, progressSection, progressFill } = els;
+  const { btn, percentEl, detailEl, progressSection, progressFill, openFolderBtn } = els;
 
   if (status.state === "downloading") {
     btn.disabled = true;
@@ -174,6 +189,10 @@ function updateStreamUI(url, status) {
     progressFill.classList.add("complete");
     percentEl.textContent = "100%";
     detailEl.textContent = "Saved";
+    if (status.downloadId !== undefined) {
+      openFolderBtn.dataset.downloadId = String(status.downloadId);
+      openFolderBtn.hidden = false;
+    }
   }
 
   if (status.state === "error") {

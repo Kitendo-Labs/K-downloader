@@ -63,6 +63,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ status });
   }
 
+  if (message.action === "showDownload") {
+    chrome.downloads.show(message.downloadId);
+    sendResponse({ shown: true });
+  }
+
   return false;
 });
 
@@ -81,12 +86,10 @@ async function handleDownloadRequest(url, streamType, tabTitle) {
 
     const ext = streamType === "dash" ? ".mp4" : ".ts";
     const filename = generateFilename(tabTitle, ext);
-    await triggerDownload(result, filename);
+    const downloadId = await triggerDownload(result, filename);
 
-    activeDownloads.set(url, { state: "done" });
+    activeDownloads.set(url, { state: "done", downloadId });
     broadcastProgress(url);
-
-    setTimeout(() => activeDownloads.delete(url), 10000);
   } catch (err) {
     activeDownloads.set(url, { state: "error", error: err.message });
     broadcastProgress(url);
@@ -101,8 +104,8 @@ function broadcastProgress(url) {
 function generateFilename(tabTitle, ext) {
   const sanitized = (tabTitle || "video")
     .replace(/[<>:"/\\|?*]+/g, "")
-    .replace(/\s+/g, " ")
     .trim()
+    .replace(/\s+/g, "_")
     .substring(0, 120);
 
   return `${sanitized || "video"}${ext}`;

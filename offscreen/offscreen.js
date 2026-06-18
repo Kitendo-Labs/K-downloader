@@ -1,23 +1,10 @@
-chrome.runtime.onMessage.addListener(async (message) => {
-  if (message.action !== "offscreen-download") return;
+// The service worker cannot create blob URLs (no DOM). This offscreen document
+// receives a Blob over a MessageChannel port and returns an object URL that the
+// service worker hands to chrome.downloads.download so it can capture a downloadId.
+navigator.serviceWorker.onmessage = (event) => {
+  if (event.data?.action !== "create-blob-url") return;
 
-  const cache = await caches.open("hls-downloads");
-  const response = await cache.match(message.cacheKey);
-  if (!response) return;
-
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = message.filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-
-  setTimeout(async () => {
-    URL.revokeObjectURL(url);
-    const c = await caches.open("hls-downloads");
-    await c.delete(message.cacheKey);
-  }, 60000);
-});
+  const port = event.ports[0];
+  const url = URL.createObjectURL(event.data.blob);
+  port.postMessage({ url });
+};

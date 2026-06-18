@@ -151,6 +151,24 @@ body {
   color: #fff;
 }
 
+.btn-open-folder {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #16a34a;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #fff;
+  color: #16a34a;
+  transition: all 0.15s;
+}
+
+.btn-open-folder:hover {
+  background: #16a34a;
+  color: #fff;
+}
+
 .progress-section {
   display: none;
 }
