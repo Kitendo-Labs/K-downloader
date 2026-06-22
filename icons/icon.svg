@@ -1,0 +1,26 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tile" x1="16" y1="12" x2="112" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#19B8CE"/>
+      <stop offset="1" stop-color="#0A6A88"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Brand tile -->
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="url(#tile)"/>
+
+  <!-- K monogram (white, chunky, round caps) -->
+  <g stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M38 30 V94"/>
+    <path d="M38 61 L75 30"/>
+    <path d="M38 61 L70 94"/>
+  </g>
+
+  <!-- Download badge (accent) bottom-right -->
+  <circle cx="96" cy="96" r="23" fill="#0A6A88"/>
+  <circle cx="96" cy="96" r="19" fill="#FF7A45"/>
+  <g fill="#FFFFFF">
+    <rect x="92" y="84" width="8" height="13" rx="2"/>
+    <path d="M83 94 H109 L96 109 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy - Kitendo Stream Downloader</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+      line-height: 1.65;
+      color: #1a1a1a;
+      background: #fff;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { color: #e6e6e6; background: #121417; }
+      a { color: #4cc7dd; }
+      .meta { color: #8a8a8a; }
+      hr { border-color: #2a2e33; }
+      code { background: #1e2227; }
+    }
+    h1 { font-size: 28px; margin-bottom: 4px; }
+    h2 { font-size: 18px; margin-top: 36px; }
+    .meta { color: #666; font-size: 14px; margin-top: 0; }
+    a { color: #0a6a88; }
+    hr { border: none; border-top: 1px solid #eaeaea; margin: 32px 0; }
+    code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+    ul { padding-left: 22px; }
+    li { margin: 6px 0; }
+    .pill { display: inline-block; background: #0a6a88; color: #fff; font-size: 12px; padding: 3px 10px; border-radius: 999px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <span class="pill">Kitendo Stream Downloader</span>
+  <h1>Privacy Policy</h1>
+  <p class="meta">Last updated: June 22, 2026</p>
+
+  <hr>
+
+  <p>
+    Kitendo Stream Downloader ("the extension") is a browser extension that detects HLS
+    (<code>.m3u8</code>) and DASH (<code>.mpd</code>) video streams on the page you are
+    viewing and lets you download them to your own device. This policy explains exactly
+    what the extension does and does not do with your data.
+  </p>
+
+  <h2>The short version</h2>
+  <p>
+    <strong>The extension collects no personal data and sends nothing to us or to any
+    third party.</strong> It has no servers, no analytics, no telemetry, and no tracking.
+    Everything it does happens locally inside your own browser.
+  </p>
+
+  <h2>What the extension accesses</h2>
+  <ul>
+    <li>
+      <strong>Network requests on the active tab</strong> - The extension watches network
+      requests to detect stream manifest URLs (<code>.m3u8</code> / <code>.mpd</code>).
+      Detection happens locally in your browser. These URLs are never transmitted anywhere.
+    </li>
+    <li>
+      <strong>The current tab's address and title</strong> - Used only to associate detected
+      streams with the tab you are on and to suggest a sensible download filename.
+    </li>
+    <li>
+      <strong>Stream content you choose to download</strong> - When you click download, the
+      extension fetches the video segments directly from the stream's own origin server (the
+      same server your browser already loads the video from) and assembles them into a single
+      file saved through your browser's normal download mechanism. The video data flows only
+      between that origin server and your device.
+    </li>
+  </ul>
+
+  <h2>What the extension stores</h2>
+  <ul>
+    <li>
+      <strong>Session storage only</strong> - Detected stream URLs (per tab) and your chosen
+      "parallel downloads" preference are kept in <code>chrome.storage.session</code>. This data
+      lives only for the current browser session and is automatically cleared when you close
+      your browser. It never leaves your device.
+    </li>
+  </ul>
+
+  <h2>What the extension does NOT do</h2>
+  <ul>
+    <li>It does not collect, store, or transmit any personally identifiable information.</li>
+    <li>It does not use analytics, advertising, fingerprinting, or tracking of any kind.</li>
+    <li>It does not send any data to the developer or to any third-party server.</li>
+    <li>It does not sell or share data, because it does not collect any.</li>
+    <li>It does not load or execute any remote code; all logic ships inside the extension.</li>
+  </ul>
+
+  <h2>Permissions and why they are needed</h2>
+  <ul>
+    <li><code>webRequest</code> - to observe network requests and detect stream manifests.</li>
+    <li><code>downloads</code> - to save the assembled video file to your device.</li>
+    <li><code>storage</code> - to remember detected streams and your preference for the session.</li>
+    <li><code>activeTab</code> / host access - so detection can work on whatever page you are viewing, since a stream can appear on any website.</li>
+    <li><code>offscreen</code> - to assemble large video files in a context with sufficient memory.</li>
+  </ul>
+
+  <h2>Responsible use</h2>
+  <p>
+    The extension is intended for downloading video content that you are authorized to
+    download - for example, your own content or media you have permission to save. You are
+    responsible for complying with the terms of service of the websites you use and with
+    applicable copyright law.
+  </p>
+
+  <h2>Changes to this policy</h2>
+  <p>
+    If this policy changes, the updated version will be posted at this URL with a new
+    "last updated" date.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions about this policy can be directed to the project maintainers via the
+    <a href="https://github.com/Kitendo-Labs/K-downloader">project repository</a>.
+  </p>
+</body>
+</html>
