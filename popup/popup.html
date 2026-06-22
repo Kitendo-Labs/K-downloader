@@ -14,6 +14,13 @@
     <div class="empty-icon">&#9673;</div>
     No streams detected on this tab
   </div>
+  <div class="footer">
+    <label class="concurrency">
+      Parallel
+      <input type="number" id="concurrency" min="1" max="16" step="1" value="8">
+    </label>
+    <span id="version" class="version"></span>
+  </div>
   <script type="module" src="popup.js"></script>
 </body>
 </html>

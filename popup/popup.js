@@ -1,10 +1,16 @@
 const streamList = document.getElementById("stream-list");
 const emptyState = document.getElementById("empty-state");
 const streamCountEl = document.getElementById("stream-count");
+const versionEl = document.getElementById("version");
+const concurrencyEl = document.getElementById("concurrency");
 const streamElements = new Map();
 let currentTabTitle = "video";
+let concurrency = 8;
 
 async function init() {
+  versionEl.textContent = `v${chrome.runtime.getManifest().version}`;
+  await initConcurrency();
+
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return showEmpty();
 
@@ -31,6 +37,24 @@ function showEmpty() {
   emptyState.hidden = false;
   streamList.innerHTML = "";
   streamCountEl.textContent = "";
+}
+
+async function initConcurrency() {
+  const { concurrency: saved } = await chrome.storage.session.get("concurrency");
+  concurrency = clampConcurrency(saved ?? 8);
+  concurrencyEl.value = String(concurrency);
+
+  concurrencyEl.addEventListener("change", () => {
+    concurrency = clampConcurrency(concurrencyEl.value);
+    concurrencyEl.value = String(concurrency);
+    chrome.storage.session.set({ concurrency });
+  });
+}
+
+function clampConcurrency(value) {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n)) return 8;
+  return Math.max(1, Math.min(16, n));
 }
 
 function getFilename(streamType) {
@@ -145,6 +169,7 @@ function renderStream(stream, index) {
       url: stream.url,
       streamType: stream.streamType,
       tabTitle: currentTabTitle,
+      concurrency,
     });
   });
 
@@ -170,7 +195,7 @@ function updateStreamUI(url, status) {
     progressFill.style.width = `${pct}%`;
     percentEl.textContent = `${pct}%`;
     detailEl.textContent = status.total
-      ? `${status.downloaded} of ${status.total} segments`
+      ? formatDetail(status)
       : "Connecting...";
   }
 
@@ -202,6 +227,33 @@ function updateStreamUI(url, status) {
     percentEl.textContent = "Error";
     detailEl.textContent = status.error || "Download failed";
   }
+}
+
+function formatDetail(status) {
+  let line = `${status.downloaded} of ${status.total} segments`;
+  if (status.bytesPerSec > 0) line += ` - ${formatSpeed(status.bytesPerSec)}`;
+  if (status.etaSeconds != null) line += ` - ~${formatEta(status.etaSeconds)} left`;
+  return line;
+}
+
+function formatSpeed(bytesPerSec) {
+  if (bytesPerSec >= 1e6) return `${(bytesPerSec / 1e6).toFixed(1)} MB/s`;
+  if (bytesPerSec >= 1e3) return `${(bytesPerSec / 1e3).toFixed(0)} KB/s`;
+  return `${Math.round(bytesPerSec)} B/s`;
+}
+
+function formatEta(seconds) {
+  if (seconds >= 3600) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.round((seconds % 3600) / 60);
+    return `${h}h ${m}m`;
+  }
+  if (seconds >= 60) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}m ${s}s`;
+  }
+  return `${seconds}s`;
 }
 
 function shortenUrl(url) {

@@ -1,7 +1,7 @@
-import { downloadStream, triggerDownload } from "../lib/downloader.js";
-
 const STREAM_PATTERN = /\.(m3u8|mpd)(\?.*)?$/i;
 const activeDownloads = new Map();
+const jobs = new Map();
+const jobByChromeId = new Map();
 
 chrome.webRequest.onBeforeRequest.addListener(
   handleRequest,
@@ -54,7 +54,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "startDownload") {
-    handleDownloadRequest(message.url, message.streamType, message.tabTitle);
+    handleDownloadRequest(message.url, message.streamType, message.tabTitle, message.concurrency);
     sendResponse({ started: true });
   }
 
@@ -68,32 +68,116 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ shown: true });
   }
 
+  if (message.target === "service-worker") {
+    handleOffscreenMessage(message);
+  }
+
   return false;
 });
 
-async function handleDownloadRequest(url, streamType, tabTitle) {
+function handleOffscreenMessage(message) {
+  const job = jobs.get(message.jobId);
+  if (!job) return;
+
+  if (message.type === "stream-download:progress") {
+    activeDownloads.set(job.url, {
+      state: "downloading",
+      downloaded: message.downloaded,
+      total: message.total,
+      percent: message.percent,
+      bytesPerSec: message.bytesPerSec,
+      etaSeconds: message.etaSeconds,
+    });
+    broadcastProgress(job.url);
+  } else if (message.type === "stream-download:ready") {
+    void startChromeDownload(message);
+  } else if (message.type === "stream-download:error") {
+    activeDownloads.set(job.url, { state: "error", error: message.message });
+    broadcastProgress(job.url);
+    jobs.delete(message.jobId);
+  }
+}
+
+async function handleDownloadRequest(url, streamType, tabTitle, concurrency) {
+  const jobId = crypto.randomUUID();
+  const ext = streamType === "dash" ? ".mp4" : ".ts";
+  const filename = generateFilename(tabTitle, ext);
+  jobs.set(jobId, { url, filename });
+
   activeDownloads.set(url, { state: "downloading", downloaded: 0, total: 0, percent: 0 });
   broadcastProgress(url);
 
+  await ensureOffscreenDocument();
+  chrome.runtime.sendMessage({
+    target: "offscreen",
+    type: "stream-download:start",
+    jobId,
+    manifestUrl: url,
+    streamType,
+    concurrency,
+  }).catch(() => {});
+}
+
+async function startChromeDownload(message) {
+  const job = jobs.get(message.jobId);
+  if (!job) return;
+
+  activeDownloads.set(job.url, { state: "saving" });
+  broadcastProgress(job.url);
+
   try {
-    const result = await downloadStream(url, streamType, (progress) => {
-      activeDownloads.set(url, { state: "downloading", ...progress });
-      broadcastProgress(url);
+    const downloadId = await chrome.downloads.download({
+      url: message.objectUrl,
+      filename: job.filename,
     });
+    job.objectUrl = message.objectUrl;
+    job.chromeDownloadId = downloadId;
+    jobByChromeId.set(downloadId, message.jobId);
 
-    activeDownloads.set(url, { state: "saving" });
-    broadcastProgress(url);
-
-    const ext = streamType === "dash" ? ".mp4" : ".ts";
-    const filename = generateFilename(tabTitle, ext);
-    const downloadId = await triggerDownload(result, filename);
-
-    activeDownloads.set(url, { state: "done", downloadId });
-    broadcastProgress(url);
+    activeDownloads.set(job.url, { state: "done", downloadId });
+    broadcastProgress(job.url);
   } catch (err) {
-    activeDownloads.set(url, { state: "error", error: err.message });
-    broadcastProgress(url);
+    activeDownloads.set(job.url, { state: "error", error: err.message });
+    broadcastProgress(job.url);
+    revokeJob(message.jobId);
   }
+}
+
+chrome.downloads.onChanged.addListener((delta) => {
+  if (!delta.state) return;
+  if (delta.state.current !== "complete" && delta.state.current !== "interrupted") return;
+
+  const jobId = jobByChromeId.get(delta.id);
+  if (jobId) revokeJob(jobId);
+});
+
+function revokeJob(jobId) {
+  const job = jobs.get(jobId);
+  if (!job) return;
+
+  if (job.objectUrl) {
+    chrome.runtime.sendMessage({
+      target: "offscreen",
+      type: "stream-download:revoke",
+      jobId,
+      objectUrl: job.objectUrl,
+    }).catch(() => {});
+  }
+  if (job.chromeDownloadId) jobByChromeId.delete(job.chromeDownloadId);
+  jobs.delete(jobId);
+}
+
+async function ensureOffscreenDocument() {
+  const contexts = await chrome.runtime.getContexts({
+    contextTypes: ["OFFSCREEN_DOCUMENT"],
+  });
+  if (contexts.length > 0) return;
+
+  await chrome.offscreen.createDocument({
+    url: "offscreen/offscreen.html",
+    reasons: ["BLOBS"],
+    justification: "Fetch video segments and create blob URL for download",
+  });
 }
 
 function broadcastProgress(url) {

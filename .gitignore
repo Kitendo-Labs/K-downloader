@@ -1,0 +1,6 @@
+# Agent tooling
+.omo/
+.sisyphus/
+
+# OS
+.DS_Store

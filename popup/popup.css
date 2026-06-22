@@ -217,3 +217,37 @@ body {
 .progress-fill.complete {
   background: #16a34a;
 }
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-top: 1px solid #eaeaea;
+  background: #fafafa;
+}
+
+.footer .concurrency {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #888;
+}
+
+.footer .concurrency input {
+  width: 44px;
+  padding: 2px 4px;
+  font-size: 11px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  font-variant-numeric: tabular-nums;
+}
+
+.footer .version {
+  font-size: 10px;
+  color: #aaa;
+  font-variant-numeric: tabular-nums;
+}
